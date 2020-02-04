@@ -1,6 +1,6 @@
 // Created on: 2020.02.02.
 // Author: Adam Csizy
-// Last modified: 2020.02.02.
+// Last modified: 2020.02.04.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,7 +140,7 @@ unsigned short int getHashID(const char symbolString[]){
 
 /*
 Function 'moveHashCursor': moves the hash cursor on the hash element specified
-by the index. DO NOT USE with empty hash table.
+by the index.
 @param1: hash cursor.
 @param2: hash table.
 @param3: index between 0 and size of hash table -1.
@@ -155,16 +155,24 @@ void moveHashCursor(HashElement *cursor, const HashTable *hashTable, const signe
 	}
 	else{
 
-		for(iter = 0, cursor = hashTable->head->next;iter < index;++iter){
+		if((index > (hashTable->size - 1)) || (0 == hashTable->size) || (index < 0)){
 
-			cursor = cursor->next;
+			logger("WARNING: Invalid index in function 'moveHashCursor'.");
+			cursor = NULL;
+		}
+		else{
+
+			for(iter = 0, cursor = hashTable->head->next;iter < index;++iter){
+
+				cursor = cursor->next;
+			}
 		}
 	}
 }
 
 /*
 Function 'moveSymbolListCursor': moves the symbol list cursor on the symbol list
-element specified by the index. DO NOT USE with empty symbol list.
+element specified by the index.
 @param1: symbol list cursor.
 @param2: symbol list.
 @param3: index between 0 and size of symbol list -1.
@@ -173,24 +181,56 @@ void moveSymbolListCursor(SymbolListElement *cursor, const SymbolList *symbolLis
 
 	signed short int iter;
 
-	for(iter = 0, cursor = symbolList->head->next;iter < index;++iter){
-		cursor = cursor->next;
+	if(NULL == symbolList){
+
+		logger("WARNING: NULL reference in function 'moveSymbolListCursor'.");
+	}
+	else{
+
+		if((index > (symbolList->size - 1)) || (0 == symbolList->size) || (index < 0)){
+
+			logger("WARNING: Invalid index in function 'moveSymbolListCursor'.");
+			cursor = NULL;
+		}
+		else{
+
+			for(iter = 0, cursor = symbolList->head->next;iter < index;++iter){
+				
+				cursor = cursor->next;
+			}
+		}
 	}
 }
 
 /*
 Function 'moveBigSymbolListCursor': moves the symbol list cursor on the symbol list
-element specified by the index. DO NOT USE with empty symbol list.
+element specified by the index.
 @param1: symbol list cursor.
 @param2: symbol list.
 @param3: index between 0 and size of symbol list -1.
 */
-void moveBigSymbolListCursor(SymbolListElement *cursor, const BigSymbolList *symbolList, const signed int index){
+void moveBigSymbolListCursor(SymbolListElement *cursor, const BigSymbolList *bigSymbolList, const signed int index){
 
 	signed int iter;
 
-	for(iter = 0, cursor = symbolList->head->next;iter < index;++iter){
-		cursor = cursor->next;
+	if(NULL == bigSymbolList){
+
+		logger("WARNING: NULL reference in function 'moveBigSymbolListCursor'.");
+	}
+	else{
+
+		if((index > (bigSymbolList->size - 1)) || (0 == bigSymbolList->size) || (index < 0)){
+
+			logger("WARNING: Invalid index in function 'moveBigSymbolListCursor'.");
+			cursor = NULL;
+		}
+		else{
+
+			for(iter = 0, cursor = bigSymbolList->head->next;iter < index;++iter){
+
+				cursor = cursor->next;
+			}
+		}
 	}
 }
 
@@ -203,20 +243,27 @@ void swapSymbolListElement(SymbolListElement *first, SymbolListElement *second){
 
 	SymbolListElement temp;
 
-	temp.next = first->next;
-	temp.prev = first->prev;
+	if((NULL == first) || (NULL == second)){
 
-	first->prev->next = second;
-	first->next->prev = second;
+		logger("WARNING: NULL reference in function 'swapSymbolListElement'.");
+	}
+	else{
 
-	second->prev->next = first;
-	second->next->prev = first;
+		temp.next = first->next;
+		temp.prev = first->prev;
 
-	first->next = second->next;
-	first->prev = second->prev;
+		first->prev->next = second;
+		first->next->prev = second;
 
-	second->next = temp.next;
-	second->prev = temp.prev;
+		second->prev->next = first;
+		second->next->prev = first;
+
+		first->next = second->next;
+		first->prev = second->prev;
+
+		second->next = temp.next;
+		second->prev = temp.prev;
+	}
 }
 
 /*
@@ -226,34 +273,51 @@ Source: https://www.techiedelight.com/iterative-implementation-of-quicksort/
 @param1: symbol list to be partitioned.
 @param2: starting index of the given symbol list, 0 or higher.
 @param3: ending index of the given symbol list, size of symbol list -1 or lower.
-@return: pivot index.
+@return: pivot index or -1 (error).
 */
 signed int partition(BigSymbolList *symbolList, const signed int startIndex, const signed int endIndex){
 
-	signed int i, pIndex;
-	SymbolListElement *pivot, *iCursor, *pIndexCursor;
+	signed int i, p;
+	SymbolListElement *pivot, *iCursor, *pCursor;
 
-	moveBigSymbolListCursor(pivot, symbolList, endIndex);
-	pIndex = startIndex;
+	if(NULL == symbolList){
 
-	for(i = startIndex;i < endIndex;++i){
+		logger("WARNING: NULL reference in function 'partition'.");
+		return -1;
+	}
+	else{
 
-		moveBigSymbolListCursor(iCursor, symbolList, i);
+		if((startIndex < 0) || (startIndex > (symbolList->size - 1)) || (endIndex > (symbolList->size - 1))){
 
-		/* Descending order by symbol frequency. */
-		if(iCursor->symbol.frequency >= pivot->symbol.frequency){
+			logger("WARNING: Invalid index in function 'partition'.");
+			return -1;
+		}
+		else{
 
-			moveBigSymbolListCursor(pIndexCursor, symbolList, pIndex);
-			swapSymbolListElement(iCursor, pIndexCursor);
+			i = startIndex;
+			p = startIndex;
 
-			++pIndex;
+			moveBigSymbolListCursor(pivot, symbolList, endIndex);
+			moveBigSymbolListCursor(iCursor, symbolList, i);
+			moveBigSymbolListCursor(pCursor, symbolList, p);
+
+			for(i = startIndex;i < endIndex;++i, iCursor = iCursor->next){
+
+				/* Descending order by symbol frequency. */
+				if(iCursor->symbol.frequency >= pivot->symbol.frequency){
+
+					swapSymbolListElement(iCursor, pCursor);
+
+					++p;
+					pCursor = pCursor->next;
+				}
+			}
+
+			swapSymbolListElement(pCursor, pivot);
+
+			return p;
 		}
 	}
-
-	moveBigSymbolListCursor(pIndexCursor, symbolList, pIndex);
-	swapSymbolListElement(pIndexCursor, pivot);
-
-	return pIndex;
 }
 
 /*
@@ -266,26 +330,34 @@ and inserts an index stack element to the top of the given index stack.
 */
 int pushFrontIndexStack(IndexStack *indexStack, const signed int startIndex, const signed int endIndex){
 
-	IndexStackElement *newIndexStackElement = (IndexStackElement*)malloc(sizeof(IndexStackElement));
+	if(NULL == indexStack){
 
-	if(newIndexStackElement == NULL){
-
-		logger("Unable to allocate memory for index stack element in function 'pushFrontIndexStack'.");
+		logger("WARNING: NULL reference in function 'pushFrontIndexStack'.");
 		return -1;
 	}
+	else{
 
-	newIndexStackElement->index.startIndex = startIndex;
-	newIndexStackElement->index.endIndex = endIndex;
+		IndexStackElement *newIndexStackElement = (IndexStackElement*)malloc(sizeof(IndexStackElement));
 
-	newIndexStackElement->next = indexStack->head->next;
-	newIndexStackElement->prev = indexStack->head;
+		if(NULL == newIndexStackElement){
 
-	indexStack->head->next->prev = newIndexStackElement;
-	indexStack->head->next = newIndexStackElement;
+			logger("Unable to allocate memory for index stack element in function 'pushFrontIndexStack'.");
+			return -1;
+		}
 
-	++(indexStack->size);
+		newIndexStackElement->index.startIndex = startIndex;
+		newIndexStackElement->index.endIndex = endIndex;
 
-	return 0;
+		newIndexStackElement->next = indexStack->head->next;
+		newIndexStackElement->prev = indexStack->head;
+
+		indexStack->head->next->prev = newIndexStackElement;
+		indexStack->head->next = newIndexStackElement;
+
+		++(indexStack->size);
+
+		return 0;
+	}
 }
 
 /*
@@ -299,19 +371,26 @@ void popFrontIndexStack(IndexStack *indexStack, signed int *startIndex, signed i
 
 	IndexStackElement *indexStackElement;
 
-	if(indexStack->size > 0){
+	if((NULL == indexStack) || (NULL == startIndex) || (NULL == endIndex)){
 
-		indexStackElement = indexStack->head->next;
+		logger("WARNING: NULL reference in function 'popFrontIndexStack'.");
+	}
+	else{
 
-		*startIndex = indexStackElement->index.startIndex;
-		*endIndex = indexStackElement->index.endIndex;
+		if(indexStack->size > 0){
 
-		indexStack->head->next = indexStackElement->next;
-		indexStackElement->next->prev = indexStack->head;
+			indexStackElement = indexStack->head->next;
 
-		free(indexStackElement);
+			*startIndex = indexStackElement->index.startIndex;
+			*endIndex = indexStackElement->index.endIndex;
 
-		--(indexStack->size);
+			indexStack->head->next = indexStackElement->next;
+			indexStackElement->next->prev = indexStack->head;
+
+			free(indexStackElement);
+
+			--(indexStack->size);
+		}
 	}
 }
 
@@ -323,29 +402,36 @@ symbol list in descending order by frequency using iterative quick sort algorith
 Source: https://www.geeksforgeeks.org/iterative-quick-sort/
 @param1: symbol list to be quick sorted.
 */
-void quickSortByFrequency(BigSymbolList *symbolList){
+void quickSortByFrequency(BigSymbolList *bigSymbolList){
 
 	signed int pivotIndex, startIndex, endIndex;
-
 	IndexStack indexStack;
-	initIndexStack(&indexStack);
 
-	pushFrontIndexStack(&indexStack, 0, (symbolList->size)-1);
+	if(NULL == bigSymbolList){
 
-	while(indexStack.size > 0){
+		logger("WARNING: NULL reference in function 'quickSortByFrequency'.");
+	}
+	else{
 
-		popFrontIndexStack(&indexStack, &startIndex, &endIndex);
+		initIndexStack(&indexStack);
 
-		pivotIndex = partition(symbolList, startIndex, endIndex);
+		pushFrontIndexStack(&indexStack, 0, (bigSymbolList->size)-1);
 
-		if(pivotIndex-1 > startIndex){
+		while(indexStack.size > 0){
 
-			pushFrontIndexStack(&indexStack, startIndex, pivotIndex-1);
-		}
+			popFrontIndexStack(&indexStack, &startIndex, &endIndex);
 
-		if(pivotIndex+1 < endIndex){
+			pivotIndex = partition(bigSymbolList, startIndex, endIndex);
 
-			pushFrontIndexStack(&indexStack, pivotIndex+1, endIndex);
+			if(pivotIndex-1 > startIndex){
+
+				pushFrontIndexStack(&indexStack, startIndex, pivotIndex-1);
+			}
+
+			if(pivotIndex+1 < endIndex){
+
+				pushFrontIndexStack(&indexStack, pivotIndex+1, endIndex);
+			}
 		}
 	}
 }
@@ -473,25 +559,32 @@ Function 'initBigSymbolList': initialises the given big symbol list.
 */
 void initBigSymbolList(BigSymbolList *bigSymbolList){
 
-	bigSymbolList->size = 0;
+	if(NULL == bigSymbolList){
 
-	bigSymbolList->head = (SymbolListElement*)malloc(sizeof(SymbolListElement));
-	bigSymbolList->tail = (SymbolListElement*)malloc(sizeof(SymbolListElement));
-	
-	if((bigSymbolList->head == NULL) || (bigSymbolList->tail == NULL)){
-
-		logger("WARNING: Unable to allocate memory for big symbol list head and/or tail in function 'initBigSymbolList'.");
-		
-		free(bigSymbolList->head);
-		free(bigSymbolList->tail);
+		logger("WARNING: NULL reference in function 'initBigSymbolList'.");
 	}
 	else{
 
-		bigSymbolList->head->next = bigSymbolList->tail;
-		bigSymbolList->head->prev = NULL;
+		bigSymbolList->size = 0;
 
-		bigSymbolList->tail->next = NULL;
-		bigSymbolList->tail->prev = bigSymbolList->head;
+		bigSymbolList->head = (SymbolListElement*)malloc(sizeof(SymbolListElement));
+		bigSymbolList->tail = (SymbolListElement*)malloc(sizeof(SymbolListElement));
+	
+		if((NULL == bigSymbolList->head) || (NULL == bigSymbolList->tail)){
+
+			logger("WARNING: Unable to allocate memory for big symbol list head and/or tail in function 'initBigSymbolList'.");
+		
+			free(bigSymbolList->head);
+			free(bigSymbolList->tail);
+		}
+		else{
+
+			bigSymbolList->head->next = bigSymbolList->tail;
+			bigSymbolList->head->prev = NULL;
+
+			bigSymbolList->tail->next = NULL;
+			bigSymbolList->tail->prev = bigSymbolList->head;
+		}
 	}
 }
 
@@ -649,27 +742,182 @@ into a single symbol list (push back).
 @param1: initialised symbol list.
 @param2: hash table containing the symbol lists to be concatenated.
 */
-void concatSymbolList(BigSymbolList *symbolList, HashTable *hashTable){
+void concatSymbolList(BigSymbolList *bigSymbolList, HashTable *hashTable){
 
 	HashElement *hashElement;
 
-	for(hashElement=hashTable->head->next;hashElement != hashTable->tail;hashElement=hashElement->next){
+	if((NULL == bigSymbolList) || (NULL == hashTable)){
 
-		/* Setting border element pointers of the source list section. */
-		hashElement->symbolList->head->next->prev=symbolList->tail->prev;
-		hashElement->symbolList->tail->prev->next=symbolList->tail;
+		logger("WARNING: NULL reference in function 'concatSymbolList'.");
+	}
+	else{
 
-		/* Setting border element pointers of the target list section. */
-		symbolList->tail->prev->next=hashElement->symbolList->head->next;
-		symbolList->tail->prev=hashElement->symbolList->tail->prev;
+		for(hashElement = hashTable->head->next;hashElement != hashTable->tail;hashElement = hashElement->next){
 
-		/* Setting sentinel pointers of the source list. */
-		hashElement->symbolList->head->next=hashElement->symbolList->tail;
-		hashElement->symbolList->tail->prev=hashElement->symbolList->head;
+			/* Setting border element pointers of the source list section. */
+			hashElement->symbolList.head->next->prev = bigSymbolList->tail->prev;
+			hashElement->symbolList.tail->prev->next = bigSymbolList->tail;
 
-		/* Setting size of the source and target lists. */
-		symbolList->size=(symbolList->size)+(hashElement->symbolList->size);
-		hashElement->symbolList->size=0;
+			/* Setting border element pointers of the target list section. */
+			bigSymbolList->tail->prev->next = hashElement->symbolList.head->next;
+			bigSymbolList->tail->prev = hashElement->symbolList.tail->prev;
+
+			/* Setting sentinel pointers of the source list. */
+			hashElement->symbolList.head->next = hashElement->symbolList.tail;
+			hashElement->symbolList.tail->prev = hashElement->symbolList.head;
+
+			/* Setting size of the source and target lists. */
+			bigSymbolList->size = (bigSymbolList->size) + (hashElement->symbolList.size);
+			hashElement->symbolList.size = 0;
+		}
+	}
+}
+
+/*
+Function 'deleteSymbol': deletes the given symbol.
+@param1: symbol to be deleted.
+*/
+void deleteSymbol(Symbol *symbol){
+
+	if(NULL == symbol){
+
+		logger("WARNING: NULL reference in function 'deleteSymbol'.");
+	}
+	else{
+
+		symbol->F = 0.0;
+		symbol->frequency = 0;
+
+		free(symbol->symbolString);
+		symbol->symbolString = NULL;
+	}
+}
+
+/*
+Function 'deleteSymbolList': decomposes and deletes the given symbol list.
+@param1: symbol list to be deleted.
+*/
+void deleteSymbolList(SymbolList *symbolList){
+
+	SymbolListElement *symbolListElement = NULL;
+
+	if(NULL == symbolList){
+
+		logger("WARNING: NULL reference in function 'deleteSymbolList'.");
+	}
+	else{
+
+		while(symbolList->size > 0){
+
+			symbolListElement = symbolList->head->next;
+
+			deleteSymbol(&(symbolListElement->symbol));
+
+			symbolList->head->next = symbolListElement->next;
+			symbolListElement->next->prev = symbolList->head;
+
+			symbolListElement->next = NULL;
+			symbolListElement->prev = NULL;
+			free(symbolListElement);
+
+			--(symbolList->size);
+
+			symbolListElement = NULL;
+		}
+
+		deleteSymbol(&(symbolList->head->symbol));
+		deleteSymbol(&(symbolList->tail->symbol));
+
+		free(symbolList->head);
+		free(symbolList->tail);
+
+		symbolList->head = NULL;
+		symbolList->tail = NULL;
+	}
+}
+
+/*
+Function 'deleteBigSymbolList': decomposes and deletes the given big symbol list.
+@param1: big symbol list to be deleted.
+*/
+void deleteBigSymbolList(BigSymbolList *bigSymbolList){
+
+	SymbolListElement *symbolListElement = NULL;
+
+	if(NULL == bigSymbolList){
+
+		logger("WARNING: NULL reference in function 'deleteBigSymbolList'.");
+	}
+	else{
+
+		while(bigSymbolList->size > 0){
+
+			symbolListElement = bigSymbolList->head->next;
+
+			deleteSymbol(&(symbolListElement->symbol));
+
+			bigSymbolList->head->next = symbolListElement->next;
+			symbolListElement->next->prev = bigSymbolList->head;
+
+			symbolListElement->next = NULL;
+			symbolListElement->prev = NULL;
+			free(symbolListElement);
+
+			--(bigSymbolList->size);
+
+			symbolListElement = NULL;
+		}
+
+		deleteSymbol(&(bigSymbolList->head->symbol));
+		deleteSymbol(&(bigSymbolList->tail->symbol));
+
+		free(bigSymbolList->head);
+		free(bigSymbolList->tail);
+
+		bigSymbolList->head = NULL;
+		bigSymbolList->tail = NULL;
+	}
+}
+
+/*
+Function 'deleteHashTable': decomposes and deletes the given hash table.
+@param1: hash table to be deleted.
+*/
+void deleteHashTable(HashTable *hashTable){
+
+	HashElement *hashElement = NULL;
+
+	if(NULL == hashTable){
+
+		logger("WARNING: NULL reference in function 'deleteHashTable'.");
+	}
+	else{
+
+		while(hashTable->size > 0){
+
+			hashElement = hashTable->head->next;
+			deleteSymbolList(&(hashElement->symbolList));
+
+			hashTable->head->next = hashElement->next;
+			hashElement->next->prev = hashTable->head;
+
+			hashElement->next = NULL;
+			hashElement->prev = NULL;
+			free(hashElement);
+
+			--(hashTable->size);
+
+			hashElement = NULL;
+		}
+
+		deleteSymbolList(&(hashTable->head->symbolList));
+		deleteSymbolList(&(hashTable->tail->symbolList));
+
+		free(hashTable->head);
+		free(hashTable->tail);
+
+		hashTable->head = NULL;
+		hashTable->tail = NULL;
 	}
 }
 
@@ -810,20 +1058,28 @@ Symbol* getSymbolBySymbolString(SymbolList *symbolList, const char symbolString[
 // Coder related functions
 
 /*
-
+Function 'generateShannonCode': generates and writes Shannon code into the output file. 
+@param1: hash table containing the symbols.
+@return: function status -1 (error) or 0 (success).
 */
-void generateShannonCode(HashTable *hashTable){
+int generateShannonCode(HashTable *hashTable){
 
-	BigSymbolList symbolList;
-	initBigSymbolList(&symbolList);
+	BigSymbolList bigSymbolList;
 
-	concatSymbolList(&symbolList, hashTable);
+	initBigSymbolList(&bigSymbolList);
 
-	quickSortByFrequency(&symbolList);
+	concatSymbolList(&bigSymbolList, hashTable);
+
+	quickSortByFrequency(&bigSymbolList);
 
 	// Calculate F for each symbol
 
-	//TODO Generate Code and Write File
+	// TODO Generate Code and Write File
+	// TODO Indicate error with negative return value
+
+	deleteBigSymbolList(&bigSymbolList);
+
+	return 0;
 }
 
 // File management related functions
@@ -1017,6 +1273,7 @@ int main(int argc, char* argv[])
 	printf("Converting %s file...\n", RAW_FILE_NAME);
 
 	if(rawTextConverter(argv[0],RAW_FILE_NAME) != 0){
+
 		logger("ERROR: Function 'rawRextConverter' failed. Program terminated.");
 		return -1;
 	}
@@ -1026,18 +1283,24 @@ int main(int argc, char* argv[])
 	printf("Processing data. This might take a while...\n");
 
 	if(rawTextProcessor(RAW_FILE_NAME, &hashTable) != 0){
+
 		logger("ERROR: Function 'rawTextProcessor' failed. Program terminated.");
 		return -1;
 	}
 
-	/* Shannon Coder and File Writer Block */
+	/* Shannon Code Generator and File Writer Block */
 
 	printf("Generating Shannon code. This might take a while...\n");
 
-	// TODO
+	if(generateShannonCode(&hashTable) != 0){
 
+		logger("ERROR: Function 'generateShannonCode' failed. Program terminated.");
+		return -1;
+	}
 
-	/* Program Component and Data Structure Decomposition free() */
+	/* Data Structure Decomposition Block */
+
+	deleteHashTable(&hashTable);
 
 	return 0;
 }
@@ -1058,27 +1321,14 @@ Is contiguous memory allocation (static array!) possible with 'such' extension?
 		2nd lvl -> Hash tables according to hash IDs
 		3rd lvl -> Symbols in alphabetic order in lists
 
-4: Use const where possible (eg.: function parameter list)
+4: Capability of processing numbers.
 
-5: Capability of processing numbers.
+5: Rearrange function declaration and definition order.
 
-6: Check for valid references in functions on parameter list.
-	Eg.: if(*ref_on_param == NULL){logger(...), return -1}
+7: Randomize pivot and modify algorythm (if necessary) in function 'partition'.
 
-7: Rearrange function declaration and definition order.
+8: Allocate memory for symbol string using only sizeof(symbolString) with malloc in function 'initSymbolByParam'.
 
-8: Use function 'moveSymbolListCursor' instead of 'moveBigSymbolListCursor' by extending iter type range 
-	(signed short int -> signed int)
-
-9: Use protection against overindexing in each 'move[...]Cursor' function.
-
-10: Move (increment) cursor (iCursor) in function 'partition' manually instead of calling the 'move[...]Cursor'
-	function.
-
-11: Revise working mechanism of function 'partition' and randomize pivot.
-
-12: Allocate memory for symbol string using only sizeof(symbolString) with malloc in function 'initSymbolByParam'.
-
-13: Use typedef for hash code type (unsigned short int). 
+9: Use typedef for hash code type (unsigned short int). 
 
 */
