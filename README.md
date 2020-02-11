@@ -14,23 +14,14 @@ Is contiguous memory allocation (static array!) possible with 'such' extension?
 	
   Tip#1:
   
-            1st lvl -> Alphabetic groups according to 1st letter(and number)
+            	1st lvl -> Alphabetic groups according to 1st letter(and number)
 		2nd lvl -> Hash tables according to hash IDs
 		3rd lvl -> Symbols in alphabetic order in lists
 
-4: Use const where possible (eg.: function parameter list)
+4: Capability of processing numbers.
 
-5: Outsource the initialisation funtions from the insertNew[...]Between() functions to the calling function.
- 
-  Tip#1:
-    
-		-> allocate locally
-		-> check for allocation exceptions locally
-		-> initialise with function call
-		-> insert with function call
-
-6: Capability of processing numbers.
+5: Randomize pivot and modify algorythm (if necessary) in function 'partition'.
 
 Note that each development field have to be launched and treated in a separate branch from the master branch.
 
-[Adam] [03-09-2019]
+[Adam] [11-02-2020]
