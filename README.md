@@ -14,7 +14,7 @@ Is contiguous memory allocation (static array!) possible with 'such' extension?
 	
   Tip#1:
   
-            	1st lvl -> Alphabetic groups according to 1st letter(and number)
+            1st lvl -> Alphabetic groups according to 1st letter(and number)
 		2nd lvl -> Hash tables according to hash IDs
 		3rd lvl -> Symbols in alphabetic order in lists
 
