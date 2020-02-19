@@ -1,10 +1,11 @@
 // Created on: 2020.02.02.
 // Author: Adam Csizy
-// Last modified: 2020.02.11.
+// Last modified: 2020.02.19.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 // C language custom extensions:
 
@@ -1059,6 +1060,96 @@ int addSymbol(const char symbolString[], HashTable *hashTable){
 	return 0;
 }
 
+/*
+Function 'setF': calculates and sets the F value for each symbol in the given
+big symbol list. Formula: F[i] = SUM[k=0;i-1](p[k]), where 'p[k]' is the probability
+of symbol 'k'.
+@param1: big symbol list. Note that list elements must be in descending order
+according to frequency.
+@param2: total number of processed symbols.
+*/
+void setF(BigSymbolList *bigSymbolList, const unsigned int totalSymbolCount){
+
+	unsigned int totalFrequency = 0;
+	SymbolListElement *symbolListElement = NULL;
+
+	if(NULL == bigSymbolList){
+
+		logger("WARNING: NULL reference in function 'setF'.");
+	}
+	else{
+
+		for(symbolListElement = bigSymbolList->head->next;
+						(symbolListElement != NULL) && (symbolListElement != bigSymbolList->tail);
+							symbolListElement = symbolListElement->next){
+
+						symbolListElement->symbol.F = (double)((double)totalFrequency/(double)totalSymbolCount);
+						totalFrequency += symbolListElement->symbol.frequency;
+		}
+	}
+}
+
+/*
+Function 'getShannonCode': calculates the Shannon code of the given symbol.
+@param1: symbol for which the Shannon code is being calculated.
+@param2: total number of processed symbols.
+@return: pointer to the generated code string.
+*/
+char* getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount){
+
+	unsigned int length, i;
+	double probability, temp, locF;
+	char *code = NULL;
+
+	if(NULL == symbol){
+
+		logger("WARNING: NULL reference in function 'getShannonCode'.");
+	}
+	else{
+
+		probability = (double)((double)(symbol->frequency)/(double)totalSymbolCount);
+
+		// length = ld(1/probablility) and ld(x) = log(x)/log(2)
+		temp = log(1.0/probability) / log(2.0);
+		if(temp > (int)temp){
+
+			length = (int)temp + 1;
+		}
+		else{
+
+			length = (int)temp;
+		}
+
+		code = (char*)malloc((length+1)*sizeof(char));
+		if(NULL == code){
+
+			logger("WARNING: Unable to allocate memory for code string in function 'getShannonCode'.");
+		}
+		else{
+
+			i = 0;
+			locF = symbol->F;
+			while(i < length){
+
+				locF *= 2;
+				if(locF < 1){
+
+					code[i] = '0';
+					++i;
+				}
+				else{
+
+					locF -= 1;
+					code[i] = '1';
+					++i;
+				}
+			}
+			code[length] = '\0';
+		}
+	}
+	return code;
+}
+
 // Coder related functions
 
 /*
@@ -1076,9 +1167,12 @@ int generateShannonCode(HashTable *hashTable){
 
 	quickSortByFrequency(&bigSymbolList);
 
-	// Calculate F for each symbol
+	setF(&bigSymbolList, TOTAL_SYMBOL_COUNT);
 
-	// TODO Generate Code and Write File
+	// At this point we have set all attribute for each symbol in the list
+	// to generate Shannon Code for the symbols.
+
+	// TODO Generate Shannon Code
 	// TODO Indicate error with negative return value
 
 	deleteBigSymbolList(&bigSymbolList);
