@@ -1,6 +1,6 @@
 // Created on: 2020.02.02.
 // Author: Adam Csizy
-// Last modified: 2020.02.19.
+// Last modified: 2020.02.20.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,8 +18,9 @@ typedef int boolean;
 
 // Global variables, constants
 
+#define INPUT_FILE_NAME "input.txt"
 #define RAW_FILE_NAME "raw_text.txt"
-#define CODE_FILE_NAME "code.txt"
+#define SYMBOLS_FILE_NAME "symbols.txt"
 #define LOG_FILE_NAME "log.txt"
 #define WORD_ARRAY_SIZE 46 /* Longest English word: 45 char + \0 */
 #define SENTINEL_HASH_ID 0 /* Invalid hash ID for sentinels. Value depends on symbol character inventory defined in function 'rawTextConverter'. See the C ASCII table for more. */
@@ -849,7 +850,7 @@ void deleteHashTable(HashTable *hashTable){
 	}
 }
 
-// Order functions
+// Sorting functions
 
 /*
 Function 'quickSortByFrequency': sorts the symbol list elements in the given
@@ -1090,16 +1091,15 @@ void setF(BigSymbolList *bigSymbolList, const unsigned int totalSymbolCount){
 }
 
 /*
-Function 'getShannonCode': calculates the Shannon code of the given symbol.
-@param1: symbol for which the Shannon code is being calculated.
+Function 'getShannonCode': generates the Shannon code of the given symbol.
+@param1: symbol of which the Shannon code is being generated.
 @param2: total number of processed symbols.
-@return: pointer to the generated code string.
+@param3: pointer to the generated code string.
 */
-char* getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount){
+void getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount, char *code){
 
 	unsigned int length, i;
 	double probability, temp, locF;
-	char *code = NULL;
 
 	if(NULL == symbol){
 
@@ -1109,7 +1109,7 @@ char* getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount){
 
 		probability = (double)((double)(symbol->frequency)/(double)totalSymbolCount);
 
-		// length = ld(1/probablility) and ld(x) = log(x)/log(2)
+		/* Formula: length = ld(1/probablility) and ld(x) = log(x)/log(2) */
 		temp = log(1.0/probability) / log(2.0);
 		if(temp > (int)temp){
 
@@ -1121,6 +1121,7 @@ char* getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount){
 		}
 
 		code = (char*)malloc((length+1)*sizeof(char));
+
 		if(NULL == code){
 
 			logger("WARNING: Unable to allocate memory for code string in function 'getShannonCode'.");
@@ -1147,37 +1148,6 @@ char* getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount){
 			code[length] = '\0';
 		}
 	}
-	return code;
-}
-
-// Coder related functions
-
-/*
-Function 'generateShannonCode': generates and writes Shannon code into the output file. 
-@param1: hash table containing the symbols.
-@return: function status -1 (error) or 0 (success).
-*/
-int generateShannonCode(HashTable *hashTable){
-
-	BigSymbolList bigSymbolList;
-
-	initBigSymbolList(&bigSymbolList);
-
-	concatSymbolList(&bigSymbolList, hashTable);
-
-	quickSortByFrequency(&bigSymbolList);
-
-	setF(&bigSymbolList, TOTAL_SYMBOL_COUNT);
-
-	// At this point we have set all attribute for each symbol in the list
-	// to generate Shannon Code for the symbols.
-
-	// TODO Generate Shannon Code
-	// TODO Indicate error with negative return value
-
-	deleteBigSymbolList(&bigSymbolList);
-
-	return 0;
 }
 
 // File management related functions
@@ -1188,24 +1158,26 @@ Function 'rawTextConverter': converts text to 'raw text' format.
 @param2: name of the target file.
 @return: function status -1 (error) or 0 (success).
 */
-int rawTextConverter(char sourceFileName[], char targetFileName[]){
+int rawTextConverter(const char sourceFileName[], const char targetFileName[]){
 
-	FILE *sourceFile=NULL, *targetFile=NULL;
+	FILE *sourceFile = NULL, *targetFile = NULL;
 	char character;
 
-	sourceFile=fopen(sourceFileName,"r");
+	sourceFile = fopen(sourceFileName,"r");
 
-	if(sourceFile == NULL){
+	if(NULL == sourceFile){
+
 		logger("ERROR: Unable to open source file in function 'rawTextConverter'.");
 		return -1;
 	}
 
-	targetFile=fopen(targetFileName,"w");
+	targetFile = fopen(targetFileName,"w");
 
-	if(targetFile == NULL){
+	if(NULL == targetFile){
+
 		logger("ERROR: Unable to open target file in function 'rawTextConverter'.");
 		fclose(sourceFile);
-		sourceFile=NULL;
+		sourceFile = NULL;
 		return -1;
 	}
 
@@ -1218,7 +1190,7 @@ int rawTextConverter(char sourceFileName[], char targetFileName[]){
 	Note that changes in conditions in function 'rawTextConverter' require
 	the revision of the cycle core and conditions in function 'rawTextProcessor'.
 	*/
-	while(fscanf(sourceFile, "%c", &character) == 1){
+	while(1 == fscanf(sourceFile, "%c", &character)){
 
 		if(character > 0x40 && character < 0x5b){
 			fprintf(targetFile, "%c", character+0x20);
@@ -1236,9 +1208,9 @@ int rawTextConverter(char sourceFileName[], char targetFileName[]){
 	}
 
 	fclose(sourceFile);
-	sourceFile=NULL;
+	sourceFile = NULL;
 	fclose(targetFile);
-	targetFile=NULL;
+	targetFile = NULL;
 
 	return 0;
 }
@@ -1249,7 +1221,7 @@ Function 'rawTextProcessor': processes data from the 'raw text' file.
 @param2: hash table where the processed data is being stored.
 @return: function status -1 (error) or 0 (success).
 */
-int rawTextProcessor(char rawTextFileName[], HashTable *hashTable){
+int rawTextProcessor(const char rawTextFileName[], HashTable *hashTable){
 
 	FILE *rawTextFile=NULL;
 	int wordIndex=0;
@@ -1350,6 +1322,110 @@ int rawTextProcessor(char rawTextFileName[], HashTable *hashTable){
 	return 0;
 }
 
+/*
+Function 'exportSymbols': generates and exports symbol - code pairs into a text file.
+@param1: big symbol list.
+@param2: name of the target file in which the symbol - code pairs are being exported.
+@param3: total number of processed symbols.
+@return: function status -1 (error) or 0 (success).
+*/
+int exportSymbols(const BigSymbolList *bigSymbolList, const char targetFileName[], const unsigned int totalSymbolCount){
+
+	char *code = NULL;
+	SymbolListElement *symbolListElement = NULL;
+	FILE *targetFile = NULL;
+
+	if(NULL == bigSymbolList){
+
+		logger("WARNING: NULL reference in function 'exportSymbols'.");
+		return -1;
+	}
+
+	targetFile = fopen(targetFileName, "w");
+
+	if(NULL == targetFile){
+
+		logger("ERROR: Unable to open target file in function 'exportSymbols'.");
+		return -1;
+	}
+
+	fprintf(targetFile, "INFO: Number of exported symbols: %d.\n", bigSymbolList->size);
+
+	for(symbolListElement = bigSymbolList->head->next;
+					(symbolListElement != NULL) && (symbolListElement != bigSymbolList->tail);
+						symbolListElement = symbolListElement->next){
+
+							getShannonCode(&(symbolListElement->symbol), totalSymbolCount, code);
+
+							if(NULL == code){
+
+								logger("WARNING: Unable to export symbol in function 'exportSymbol'.");
+							}
+							else{
+
+								fprintf(targetFile,"%s %s\n", symbolListElement->symbol.symbolString, code);
+								free(code);
+								code = NULL;
+							}
+	}
+
+	fclose(targetFile);
+	targetFile = NULL;
+
+	return 0;
+}
+
+/*
+Function 'convertText': 
+@return: function status -1 (error) or 0 (success).
+*/
+int convertText(void){
+
+	// TODO
+	return 0;
+}
+
+// Coder related functions
+
+/*
+Function 'generateShannonCode': generates and writes Shannon code into the output file. 
+@param1: hash table containing the symbols.
+@return: function status -1 (error) or 0 (success).
+*/
+int generateShannonCode(HashTable *hashTable){
+
+	BigSymbolList bigSymbolList;
+
+	initBigSymbolList(&bigSymbolList);
+
+	concatSymbolList(&bigSymbolList, hashTable);
+
+	quickSortByFrequency(&bigSymbolList);
+
+	setF(&bigSymbolList, TOTAL_SYMBOL_COUNT);
+
+	/*
+	At this point the attributes for each symbol in the list have been set.
+	Shannon code can be generated at any time as long as the symbol list exists.
+ 
+	Note the symbols are in descending order by frequency. It can be used for
+	further optimisation (eg.: linear search from first element due to symbol
+	probability on text conversion). In any other case a sorting function
+	must be called on the symbol list.
+	*/
+
+	/* Call sorting function here if needed. */
+
+	/* Call symbol exporting function if needed. */
+	exportSymbols(&bigSymbolList, SYMBOLS_FILE_NAME, TOTAL_SYMBOL_COUNT);
+
+	/* Call text converter fuction if needed. */
+	// TODO Call text converter function.
+
+	deleteBigSymbolList(&bigSymbolList);
+
+	return 0;
+}
 
 // Main function of the program 
 
@@ -1370,7 +1446,7 @@ int main(int argc, char* argv[])
 
 	printf("Converting %s file...\n", RAW_FILE_NAME);
 
-	if(rawTextConverter(argv[0],RAW_FILE_NAME) != 0){
+	if(rawTextConverter(INPUT_FILE_NAME/*argv[0]*/,RAW_FILE_NAME) != 0){
 
 		logger("ERROR: Function 'rawRextConverter' failed. Program terminated.");
 		return -1;
@@ -1413,14 +1489,18 @@ Is contiguous memory allocation (static array!) possible with 'such' extension?
 2: Optimize search algorithms by using relative indexing.
 	(Eg.: moveHashCursor(lastCursorPos, relativeIndex{...}))
 
-3: New data storage structure and algorithms based on alphabetical order, hash ID, symbol probability weigh.
-	Tip#1:
-		1st lvl -> Alphabetic groups according to 1st letter(and number) (A-Z,0-9)
-		2nd lvl -> Hash tables according to hash IDs
-		3rd lvl -> Symbols in alphabetic order in lists
+3: New data storage structure and algorithms based on alphabetical order, hash ID, symbol probability weight.
+
+		1st layer -> Alphabetic domains according to 1st character (A-Z,0-9)
+		2nd layer -> Hash tables according to hash IDs
+		3rd layer -> Symbols in alphabetic order in lists
 
 4: Capability of processing numbers.
 
 5: Randomize pivot and modify algorythm (if necessary) in function 'partition'.
+
+6: Indicate error with negative return value in function 'generateShannonCode'.
+
+7: Outsource program components into source files and headers.
 
 */
