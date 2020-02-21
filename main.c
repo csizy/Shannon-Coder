@@ -1,6 +1,6 @@
 // Created on: 2020.02.02.
 // Author: Adam Csizy
-// Last modified: 2020.02.20.
+// Last modified: 2020.02.21.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -253,20 +253,44 @@ void swapSymbolListElement(SymbolListElement *first, SymbolListElement *second){
 	}
 	else{
 
-		temp.next = first->next;
-		temp.prev = first->prev;
+		if((first->next != second) && (second->next != first)){
 
-		first->prev->next = second;
-		first->next->prev = second;
+			// Handle nonadjacent elements
+			temp.next = first->next;
+			temp.prev = first->prev;
 
-		second->prev->next = first;
-		second->next->prev = first;
+			first->prev->next = second;
+			first->next->prev = second;
 
-		first->next = second->next;
-		first->prev = second->prev;
+			second->prev->next = first;
+			second->next->prev = first;
 
-		second->next = temp.next;
-		second->prev = temp.prev;
+			first->next = second->next;
+			first->prev = second->prev;
+
+			second->next = temp.next;
+			second->prev = temp.prev;
+
+		}
+		else{
+
+			// Handle adjacent elements
+			if(first->next == second){
+
+				first->prev->next = second;
+				second->next->prev = first;
+
+				first->next = second->next;
+				second->prev = first->prev;
+
+				first->prev = second;
+				second->next = first;
+			}
+			else{
+
+				swapSymbolListElement(second, first);
+			}
+		}
 	}
 }
 
@@ -279,19 +303,19 @@ Source: https://www.techiedelight.com/iterative-implementation-of-quicksort/
 @param3: ending index of the given symbol list, size of symbol list -1 or lower.
 @return: pivot index or -1 (error).
 */
-signed int partition(BigSymbolList *symbolList, const signed int startIndex, const signed int endIndex){
+signed int partition(BigSymbolList *bigSymbolList, const signed int startIndex, const signed int endIndex){
 
 	signed int i, p;
 	SymbolListElement *pivot, *iCursor, *pCursor;
 
-	if(NULL == symbolList){
+	if(NULL == bigSymbolList){
 
 		logger("WARNING: NULL reference in function 'partition'.");
 		return -1;
 	}
 	else{
 
-		if((startIndex < 0) || (startIndex > (symbolList->size - 1)) || (endIndex > (symbolList->size - 1))){
+		if((startIndex < 0) || (startIndex > (bigSymbolList->size - 1)) || (endIndex > (bigSymbolList->size - 1))){
 
 			logger("WARNING: Invalid index in function 'partition'.");
 			return -1;
@@ -301,11 +325,11 @@ signed int partition(BigSymbolList *symbolList, const signed int startIndex, con
 			i = startIndex;
 			p = startIndex;
 
-			moveBigSymbolListCursor(&pivot, symbolList, endIndex);
-			moveBigSymbolListCursor(&iCursor, symbolList, i);
-			moveBigSymbolListCursor(&pCursor, symbolList, p);
+			moveBigSymbolListCursor(&pivot, bigSymbolList, endIndex);
+			moveBigSymbolListCursor(&iCursor, bigSymbolList, i);
+			moveBigSymbolListCursor(&pCursor, bigSymbolList, p);
 
-			for(i = startIndex;i < endIndex;++i, iCursor = iCursor->next){
+			for(i = startIndex;i < endIndex;++i, moveBigSymbolListCursor(&iCursor, bigSymbolList, i)){
 
 				/* Descending order by symbol frequency. */
 				if(iCursor->symbol.frequency >= pivot->symbol.frequency){
@@ -313,7 +337,7 @@ signed int partition(BigSymbolList *symbolList, const signed int startIndex, con
 					swapSymbolListElement(iCursor, pCursor);
 
 					++p;
-					pCursor = pCursor->next;
+					moveBigSymbolListCursor(&pCursor, bigSymbolList, p);
 				}
 			}
 
@@ -754,9 +778,6 @@ void deleteSymbolList(SymbolList *symbolList){
 			symbolListElement = NULL;
 		}
 
-		deleteSymbol(&(symbolList->head->symbol));
-		deleteSymbol(&(symbolList->tail->symbol));
-
 		free(symbolList->head);
 		free(symbolList->tail);
 
@@ -797,9 +818,6 @@ void deleteBigSymbolList(BigSymbolList *bigSymbolList){
 			symbolListElement = NULL;
 		}
 
-		deleteSymbol(&(bigSymbolList->head->symbol));
-		deleteSymbol(&(bigSymbolList->tail->symbol));
-
 		free(bigSymbolList->head);
 		free(bigSymbolList->tail);
 
@@ -838,9 +856,6 @@ void deleteHashTable(HashTable *hashTable){
 
 			hashElement = NULL;
 		}
-
-		deleteSymbolList(&(hashTable->head->symbolList));
-		deleteSymbolList(&(hashTable->tail->symbolList));
 
 		free(hashTable->head);
 		free(hashTable->tail);
@@ -908,9 +923,6 @@ SymbolList* getSymbolListByHashID(HashTable *hashTable, const HashID hashID){
 	HashElement *hashCursor = NULL, *newHashElement = NULL;
 
 	signed int infIndex = 0, supIndex = ((hashTable->size)-1), midIndex;
-
-	//midIndex = (infIndex + supIndex)/2;
-	//moveHashCursor(&hashCursor, hashTable, midIndex);
 	
 	while(infIndex <= supIndex){
 		
@@ -981,9 +993,6 @@ Symbol* getSymbolBySymbolString(SymbolList *symbolList, const char symbolString[
 	SymbolListElement *symbolListCursor = NULL, *newSymbolListElement = NULL;
 
 	signed short int infIndex = 0, supIndex = (symbolList->size)-1, midIndex;
-
-	//midIndex = (infIndex + supIndex)/2;
-	//moveSymbolListCursor(&symbolListCursor, symbolList, midIndex);
 
 	while(infIndex <= supIndex){
 
@@ -1210,13 +1219,13 @@ int rawTextConverter(const char sourceFileName[], const char targetFileName[]){
 			fprintf(targetFile, "%c", character+0x20);
 		}
 		else{
-			if(character > 0x60 && character < 0x7b)
+			if(character > 0x60 && character < 0x7b){
 				fprintf(targetFile, "%c", character);
+			}
 			else{
-				if(character == 0x20)
+				if(character == 0x20){
 					fprintf(targetFile, "%c", character);
-				else
-					/*void action*/;
+				}
 			}
 		}
 	}
@@ -1237,16 +1246,16 @@ Function 'rawTextProcessor': processes data from the 'raw text' file.
 */
 int rawTextProcessor(const char rawTextFileName[], HashTable *hashTable){
 
-	FILE *rawTextFile=NULL;
-	int wordIndex=0;
+	FILE *rawTextFile = NULL;
+	int wordIndex = 0;
 	char character, word[WORD_ARRAY_SIZE];
 
 	typedef enum{start, stop, space, letter} State;
-	State currState=start;
+	State currState = start;
 
 	rawTextFile=fopen(rawTextFileName,"r");
 
-	if(rawTextFile == NULL){
+	if(NULL == rawTextFile){
 		logger("ERROR: Unable to open 'raw text' file in function 'rawTextProcessor'.");
 		return -1;
 	}
@@ -1265,62 +1274,62 @@ int rawTextProcessor(const char rawTextFileName[], HashTable *hashTable){
 		case start:
 
 			if(fscanf(rawTextFile, "%c", &character) != 1)
-				currState=stop;
+				currState = stop;
 			else
-				if(character == ' ')
-					currState=space;
+				if(' ' == character)
+					currState = space;
 				else{
-					word[wordIndex]=character;
+					word[wordIndex] = character;
 					++wordIndex;
-					currState=letter;
+					currState = letter;
 				}
 			break;
 
 		case space:
 
 			if(fscanf(rawTextFile, "%c", &character) != 1)
-				currState=stop;
+				currState = stop;
 			else
-				if(character == ' ')
-					currState=space;
+				if(' ' == character)
+					currState = space;
 				else{
-					word[wordIndex]=character;
+					word[wordIndex] = character;
 					++wordIndex;
-					currState=letter;
+					currState = letter;
 				}
 			break;
 
 		case letter:
 
 			if(fscanf(rawTextFile, "%c", &character) != 1){
-				word[wordIndex]='\0';
-				if(addSymbol(word, hashTable) == 0)
+				word[wordIndex] = '\0';
+				if(0 == addSymbol(word, hashTable))
 					++TOTAL_SYMBOL_COUNT;
-				wordIndex=0;
-				currState=stop;
+				wordIndex = 0;
+				currState = stop;
 			}
 			else
-				if(character == ' '){
-					word[wordIndex]='\0';
-					if(addSymbol(word, hashTable) == 0)
+				if(' ' == character){
+					word[wordIndex] = '\0';
+					if(0 == addSymbol(word, hashTable))
 						++TOTAL_SYMBOL_COUNT;
-					wordIndex=0;
-					currState=space;
+					wordIndex = 0;
+					currState = space;
 				}
 				else{
 					if(wordIndex < (WORD_ARRAY_SIZE-1)){
-						word[wordIndex]=character;
+						word[wordIndex] = character;
 						++wordIndex;
-						currState=letter;
+						currState = letter;
 					}
 					else{ /*remains of the word being treated as a new word*/
-						word[wordIndex]='\0';
-						if(addSymbol(word, hashTable) == 0)
+						word[wordIndex] = '\0';
+						if(0 == addSymbol(word, hashTable))
 							++TOTAL_SYMBOL_COUNT;
-						wordIndex=0;
-						word[wordIndex]=character;
+						wordIndex = 0;
+						word[wordIndex] = character;
 						++wordIndex;
-						currState=letter;
+						currState = letter;
 						logger("WARNING: A word truncated in function 'rawTextProcessor'.\nGiven WORD_ARRAY_SIZE is exceeded.");
 					}
 					
@@ -1331,7 +1340,7 @@ int rawTextProcessor(const char rawTextFileName[], HashTable *hashTable){
 	}
 
 	fclose(rawTextFile);
-	rawTextFile=NULL;
+	rawTextFile = NULL;
 
 	return 0;
 }
@@ -1362,6 +1371,8 @@ int exportSymbols(const BigSymbolList *bigSymbolList, const char targetFileName[
 		logger("ERROR: Unable to open target file in function 'exportSymbols'.");
 		return -1;
 	}
+
+	printf("Exporting symbols to %s ...\n", SYMBOLS_FILE_NAME);
 
 	fprintf(targetFile, "INFO: Number of exported symbols: %d.\n", bigSymbolList->size);
 
@@ -1433,7 +1444,7 @@ int generateShannonCode(HashTable *hashTable){
 	/* Call symbol exporting function if needed. */
 	exportSymbols(&bigSymbolList, SYMBOLS_FILE_NAME, TOTAL_SYMBOL_COUNT);
 
-	/* Call text converter fuction if needed. */
+	/* Call text converter function if needed. */
 	// TODO Call text converter function.
 
 	deleteBigSymbolList(&bigSymbolList);
@@ -1490,13 +1501,15 @@ int main(int argc, char* argv[])
 
 	deleteHashTable(&hashTable);
 
+	printf("End of program.");
+
 	return 0;
 }
 
 /*
 FUTURE DEVELOPMENT FIELDS:
 
-1: Evaluate number of independent hashIDs and number of independent symbols per symbol list/hash element.
+1: Evaluate number of independent hashIDs and number of independent symbols per symbol list.
 Use static arrays instead of dynamic arrays. Improve search algorythms due to static array by indexing.
 Is contiguous memory allocation (static array!) possible with 'such' extension?
 
@@ -1515,6 +1528,8 @@ Is contiguous memory allocation (static array!) possible with 'such' extension?
 
 6: Indicate error with negative return value in function 'generateShannonCode'.
 
-7: Outsource program components into source files and headers.
+7: Outsource program components into source files and headers to improve code maintenance.
+
+8: Implement text converter function.
 
 */
