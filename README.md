@@ -11,9 +11,7 @@ Is contiguous memory allocation (static array) possible with such extension?
 ( Eg.: moveHashCursor(actualCursorPos, relativeIndex{...}) )
 
 3: New data storage structure and algorithms based on alphabetical order, hash ID, symbol probability weigh.
-	
-  Tip#1:
-  
+
             1st layer -> Alphabetic domains according to first character (A-Z,0-9)
 		2nd layer -> Hash tables according to hash IDs
 		3rd layer -> Symbols in alphabetical order in lists
