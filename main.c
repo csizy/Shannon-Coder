@@ -149,7 +149,7 @@ by the index.
 @param2: hash table.
 @param3: index between 0 and size of hash table -1.
 */
-void moveHashCursor(HashElement *cursor, const HashTable *hashTable, const signed int index){
+void moveHashCursor(HashElement* *cursor, const HashTable *hashTable, const signed int index){
 
 	signed int iter;
 
@@ -162,13 +162,13 @@ void moveHashCursor(HashElement *cursor, const HashTable *hashTable, const signe
 		if((index > (hashTable->size - 1)) || (0 == hashTable->size) || (index < 0)){
 
 			logger("WARNING: Invalid index in function 'moveHashCursor'.");
-			cursor = NULL;
+			*cursor = NULL;
 		}
 		else{
 
-			for(iter = 0, cursor = hashTable->head->next;iter < index;++iter){
+			for(iter = 0, *cursor = hashTable->head->next;iter < index;++iter){
 
-				cursor = cursor->next;
+				*cursor = (*cursor)->next;
 			}
 		}
 	}
@@ -181,7 +181,7 @@ element specified by the index.
 @param2: symbol list.
 @param3: index between 0 and size of symbol list -1.
 */
-void moveSymbolListCursor(SymbolListElement *cursor, const SymbolList *symbolList, const signed short int index){
+void moveSymbolListCursor(SymbolListElement* *cursor, const SymbolList *symbolList, const signed short int index){
 
 	signed short int iter;
 
@@ -194,13 +194,13 @@ void moveSymbolListCursor(SymbolListElement *cursor, const SymbolList *symbolLis
 		if((index > (symbolList->size - 1)) || (0 == symbolList->size) || (index < 0)){
 
 			logger("WARNING: Invalid index in function 'moveSymbolListCursor'.");
-			cursor = NULL;
+			*cursor = NULL;
 		}
 		else{
 
-			for(iter = 0, cursor = symbolList->head->next;iter < index;++iter){
+			for(iter = 0, *cursor = symbolList->head->next;iter < index;++iter){
 				
-				cursor = cursor->next;
+				*cursor = (*cursor)->next;
 			}
 		}
 	}
@@ -213,7 +213,7 @@ element specified by the index.
 @param2: symbol list.
 @param3: index between 0 and size of symbol list -1.
 */
-void moveBigSymbolListCursor(SymbolListElement *cursor, const BigSymbolList *bigSymbolList, const signed int index){
+void moveBigSymbolListCursor(SymbolListElement* *cursor, const BigSymbolList *bigSymbolList, const signed int index){
 
 	signed int iter;
 
@@ -226,13 +226,13 @@ void moveBigSymbolListCursor(SymbolListElement *cursor, const BigSymbolList *big
 		if((index > (bigSymbolList->size - 1)) || (0 == bigSymbolList->size) || (index < 0)){
 
 			logger("WARNING: Invalid index in function 'moveBigSymbolListCursor'.");
-			cursor = NULL;
+			*cursor = NULL;
 		}
 		else{
 
-			for(iter = 0, cursor = bigSymbolList->head->next;iter < index;++iter){
+			for(iter = 0, *cursor = bigSymbolList->head->next;iter < index;++iter){
 
-				cursor = cursor->next;
+				*cursor = (*cursor)->next;
 			}
 		}
 	}
@@ -301,9 +301,9 @@ signed int partition(BigSymbolList *symbolList, const signed int startIndex, con
 			i = startIndex;
 			p = startIndex;
 
-			moveBigSymbolListCursor(pivot, symbolList, endIndex);
-			moveBigSymbolListCursor(iCursor, symbolList, i);
-			moveBigSymbolListCursor(pCursor, symbolList, p);
+			moveBigSymbolListCursor(&pivot, symbolList, endIndex);
+			moveBigSymbolListCursor(&iCursor, symbolList, i);
+			moveBigSymbolListCursor(&pCursor, symbolList, p);
 
 			for(i = startIndex;i < endIndex;++i, iCursor = iCursor->next){
 
@@ -909,13 +909,13 @@ SymbolList* getSymbolListByHashID(HashTable *hashTable, const HashID hashID){
 
 	signed int infIndex = 0, supIndex = ((hashTable->size)-1), midIndex;
 
-	midIndex = (infIndex + supIndex)/2;
-	moveHashCursor(hashCursor, hashTable, midIndex);
+	//midIndex = (infIndex + supIndex)/2;
+	//moveHashCursor(&hashCursor, hashTable, midIndex);
 	
 	while(infIndex <= supIndex){
 		
 		midIndex = (infIndex + supIndex)/2;
-		moveHashCursor(hashCursor, hashTable, midIndex);
+		moveHashCursor(&hashCursor, hashTable, midIndex);
 
 		if(hashID == hashCursor->hashID)
 			return &(hashCursor->symbolList);
@@ -936,22 +936,29 @@ SymbolList* getSymbolListByHashID(HashTable *hashTable, const HashID hashID){
 
 	initHashElementByParam(newHashElement, hashID);
 
-	/*
-	Condition ' supIndex < midIndex ' is FORBIDDEN with unsigned types.
-	Eg.: midIndex equals 0 and supIndex is decremented to -1 -> overflow.
-	*/
-
-	if(infIndex > midIndex){
-
-		/* Insert after midIndex. */
-
-		insertHashElementBetween(newHashElement, hashCursor, hashCursor->next);
+	if(0 == hashTable->size){
+		
+		insertHashElementBetween(newHashElement, hashTable->head, hashTable->tail);
 	}
 	else{
 
-		/* Insert before midIndex. */
+		/*
+		Condition ' supIndex < midIndex ' is FORBIDDEN with unsigned types.
+		Eg.: midIndex equals 0 and supIndex is decremented to -1 -> overflow.
+		*/
 
-		insertHashElementBetween(newHashElement, hashCursor->prev, hashCursor);
+		if(infIndex > midIndex){
+
+			/* Insert after midIndex. */
+
+			insertHashElementBetween(newHashElement, hashCursor, hashCursor->next);
+		}
+		else{
+
+			/* Insert before midIndex. */
+
+			insertHashElementBetween(newHashElement, hashCursor->prev, hashCursor);
+		}
 	}
 
 	++(hashTable->size);
@@ -975,13 +982,13 @@ Symbol* getSymbolBySymbolString(SymbolList *symbolList, const char symbolString[
 
 	signed short int infIndex = 0, supIndex = (symbolList->size)-1, midIndex;
 
-	midIndex = (infIndex + supIndex)/2;
-	moveSymbolListCursor(symbolListCursor, symbolList, midIndex);
+	//midIndex = (infIndex + supIndex)/2;
+	//moveSymbolListCursor(&symbolListCursor, symbolList, midIndex);
 
 	while(infIndex <= supIndex){
 
 		midIndex = (infIndex + supIndex)/2;
-		moveSymbolListCursor(symbolListCursor, symbolList, midIndex);
+		moveSymbolListCursor(&symbolListCursor, symbolList, midIndex);
 
 		if(0 == strcmp(symbolString, symbolListCursor->symbol.symbolString))
 			return &(symbolListCursor->symbol);
@@ -1003,22 +1010,29 @@ Symbol* getSymbolBySymbolString(SymbolList *symbolList, const char symbolString[
 	initSymbolByParam(&newSymbol, symbolString, 0, 0.0);
 	initSymbolListElementByParam(newSymbolListElement, &newSymbol);
 
-	/*
-	Condition ' supIndex < midIndex ' is FORBIDDEN with unsigned types.
-	Eg.: midIndex equals 0 and supIndex is decremented to -1 -> overflow.
-	*/
+	if(0 == symbolList->size){
 
-	if(infIndex > midIndex){
-
-		/* Insert after midIndex. */
-
-		insertSymbolListElementBetween(newSymbolListElement,symbolListCursor,symbolListCursor->next);
+		insertSymbolListElementBetween(newSymbolListElement, symbolList->head, symbolList->tail);
 	}
 	else{
 
-		/* Insert before midIndex. */
+		/*
+		Condition ' supIndex < midIndex ' is FORBIDDEN with unsigned types.
+		Eg.: midIndex equals 0 and supIndex is decremented to -1 -> overflow.
+		*/
 
-		insertSymbolListElementBetween(newSymbolListElement,symbolListCursor->prev,symbolListCursor);
+		if(infIndex > midIndex){
+
+			/* Insert after midIndex. */
+
+			insertSymbolListElementBetween(newSymbolListElement,symbolListCursor,symbolListCursor->next);
+		}
+		else{
+
+			/* Insert before midIndex. */
+
+			insertSymbolListElementBetween(newSymbolListElement,symbolListCursor->prev,symbolListCursor);
+		}
 	}
 
 	++(symbolList->size);
@@ -1096,7 +1110,7 @@ Function 'getShannonCode': generates the Shannon code of the given symbol.
 @param2: total number of processed symbols.
 @param3: pointer to the generated code string.
 */
-void getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount, char *code){
+void getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount, char* *code){
 
 	unsigned int length, i;
 	double probability, temp, locF;
@@ -1120,9 +1134,9 @@ void getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount, c
 			length = (int)temp;
 		}
 
-		code = (char*)malloc((length+1)*sizeof(char));
+		*code = (char*)malloc((length+1)*sizeof(char));
 
-		if(NULL == code){
+		if(NULL == *code){
 
 			logger("WARNING: Unable to allocate memory for code string in function 'getShannonCode'.");
 		}
@@ -1135,17 +1149,17 @@ void getShannonCode(const Symbol *symbol, const unsigned int totalSymbolCount, c
 				locF *= 2;
 				if(locF < 1){
 
-					code[i] = '0';
+					(*code)[i] = '0';
 					++i;
 				}
 				else{
 
 					locF -= 1;
-					code[i] = '1';
+					(*code)[i] = '1';
 					++i;
 				}
 			}
-			code[length] = '\0';
+			(*code)[length] = '\0';
 		}
 	}
 }
@@ -1355,7 +1369,7 @@ int exportSymbols(const BigSymbolList *bigSymbolList, const char targetFileName[
 					(symbolListElement != NULL) && (symbolListElement != bigSymbolList->tail);
 						symbolListElement = symbolListElement->next){
 
-							getShannonCode(&(symbolListElement->symbol), totalSymbolCount, code);
+							getShannonCode(&(symbolListElement->symbol), totalSymbolCount, &code);
 
 							if(NULL == code){
 
