@@ -8,7 +8,7 @@ Use static arrays instead of dynamic arrays. Improve search algorythms due to st
 Is contiguous memory allocation (static array) possible with such extension?
 
 2: Optimize search algorithms by using relative indexing.\
-( Eg.: moveHashCursor(actualCursorPos, relativeIndex{...}) )
+( eg.: moveHashCursor(actualCursorPos, relativeIndex{...}) )
 
 3: New data storage structure and algorithms based on alphabetical order, hash ID, symbol probability weigh.
 
