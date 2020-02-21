@@ -1514,13 +1514,13 @@ Use static arrays instead of dynamic arrays. Improve search algorythms due to st
 Is contiguous memory allocation (static array!) possible with 'such' extension?
 
 2: Optimize search algorithms by using relative indexing.
-	(Eg.: moveHashCursor(lastCursorPos, relativeIndex{...}))
+	(eg.: moveHashCursor(actualCursorPos, relativeIndex{...}))
 
 3: New data storage structure and algorithms based on alphabetical order, hash ID, symbol probability weight.
 
-		1st layer -> Alphabetic domains according to 1st character (A-Z,0-9)
+		1st layer -> Alphabetic domains according to first character (A-Z,0-9)
 		2nd layer -> Hash tables according to hash IDs
-		3rd layer -> Symbols in alphabetic order in lists
+		3rd layer -> Symbols in alphabetical order in lists
 
 4: Capability of processing numbers.
 
@@ -1530,6 +1530,6 @@ Is contiguous memory allocation (static array!) possible with 'such' extension?
 
 7: Outsource program components into source files and headers to improve code maintenance.
 
-8: Implement text converter function.
+8: Implement text converter function ('convertText').
 
 */
