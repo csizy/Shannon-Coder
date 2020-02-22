@@ -4,7 +4,7 @@ Coder segment of the Shannon coder-decoder.
 #### Future Development Fields in Question
 
 1: Evaluate number of independent hashIDs and number of independent symbols per symbol list.\
-Use static arrays instead of dynamic arrays. Improve search algorythms due to static array by indexing.\
+Use static arrays instead of dynamic arrays. Improve search algorithms due to static array by indexing.\
 Is contiguous memory allocation (static array) possible with such extension?
 
 2: Optimize search algorithms by using relative indexing.\
@@ -18,7 +18,7 @@ Is contiguous memory allocation (static array) possible with such extension?
 
 4: Capability of processing numbers.
 
-5: Randomize pivot and modify algorythm (if necessary) in function 'partition'.
+5: Randomize pivot and modify algorithm (if necessary) in function 'partition'.
 
 6: Indicate error with negative return value in function 'generateShannonCode'.
 
